@@ -47,3 +47,9 @@ flowchart TD
 - Frontend: Vite + React 18 + TypeScript + Tailwind
 - Backend: Hono on Vercel Functions (Node.js)
 - 배포: Vercel
+
+## License
+
+© 2026 &lt;team name&gt;. All rights reserved.
+Source is published for reference only. No use, copying, modification,
+or redistribution is permitted without prior written consent.

@@ -1,29 +1,54 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import type {
   ChatMessage,
   FinalizeQueryArgs,
-  EscalateArgs,
   MatchResponse,
 } from "../schema";
-import Disclaimer from "../components/Disclaimer";
-import LocationInput, { type LocationValue } from "../components/LocationInput";
+import type { LocationValue } from "../components/LocationInput";
 import ChatStream from "../components/ChatStream";
-import ResultCard from "../components/ResultCard";
 import { postChat, postMatch } from "../lib/api";
 import { readSSE } from "../lib/sse";
+import { getCurrentPosition } from "../lib/geo";
 
 export default function Chat() {
   const navigate = useNavigate();
+  const routerLoc = useLocation();
+  const initial = (routerLoc.state as { location?: LocationValue } | null)?.location;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [location, setLocation] = useState<LocationValue>({ text: "" });
+  const [location, setLocation] = useState<LocationValue>(initial ?? { text: "" });
   const [busy, setBusy] = useState(false);
   const [match, setMatch] = useState<MatchResponse | null>(null);
+  const [matching, setMatching] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   async function handleSend(text: string) {
     if (busy) return;
     setError(null);
+
+    let loc = location;
+    const isFirst = messages.filter((m) => m.role !== "system").length === 0;
+    if (isFirst && !loc.text.trim() && loc.lat == null) {
+      try {
+        const pos = await getCurrentPosition();
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        let display = "";
+        try {
+          const res = await fetch(`/api/geo/reverse?lng=${lng}&lat=${lat}`);
+          if (res.ok) {
+            const data = (await res.json()) as { display?: string };
+            display = data.display ?? "";
+          }
+        } catch {
+          // ignore
+        }
+        loc = { text: display || "현재 위치", lat, lng };
+        setLocation(loc);
+      } catch {
+        // proceed without location
+      }
+    }
 
     const nextMessages: ChatMessage[] = [
       ...messages,
@@ -31,7 +56,6 @@ export default function Chat() {
     ];
     setMessages(nextMessages);
 
-    // optimistic assistant placeholder
     const assistantIdx = nextMessages.length;
     setMessages((prev) => [...prev, { role: "assistant", content: "" }]);
     setBusy(true);
@@ -39,9 +63,9 @@ export default function Chat() {
     try {
       const res = await postChat({
         messages: nextMessages,
-        location_text: location.text || undefined,
-        lat: location.lat,
-        lng: location.lng,
+        location_text: loc.text || undefined,
+        lat: loc.lat,
+        lng: loc.lng,
       });
       if (!res.ok || !res.body) {
         throw new Error("대화 응답을 받지 못했습니다.");
@@ -53,10 +77,7 @@ export default function Chat() {
             const copy = [...prev];
             const cur = copy[assistantIdx];
             if (cur && cur.role === "assistant") {
-              copy[assistantIdx] = {
-                ...cur,
-                content: cur.content + chunk,
-              };
+              copy[assistantIdx] = { ...cur, content: cur.content + chunk };
             }
             return copy;
           });
@@ -65,16 +86,6 @@ export default function Chat() {
           if (tool.name === "finalize_query") {
             const args = tool.args as unknown as FinalizeQueryArgs;
             await runMatch(args);
-          } else if (tool.name === "escalate_to_119") {
-            const args = tool.args as unknown as EscalateArgs;
-            navigate("/escalate", {
-              state: {
-                reason_label: args.reason_label,
-                location_text: args.location_text || location.text || "",
-                lat: location.lat,
-                lng: location.lng,
-              },
-            });
           }
         },
       });
@@ -86,6 +97,7 @@ export default function Chat() {
   }
 
   async function runMatch(args: FinalizeQueryArgs) {
+    setMatching(true);
     try {
       const result = await postMatch({
         location_text: args.location_text || location.text || "",
@@ -97,56 +109,42 @@ export default function Chat() {
       setMatch(result);
     } catch (e) {
       setError(e instanceof Error ? e.message : "매칭에 실패했습니다.");
+    } finally {
+      setMatching(false);
     }
   }
 
   return (
-    <div className="min-h-full flex flex-col bg-gray-50">
-      <header className="px-4 py-3 bg-white border-b border-gray-200">
-        <h1 className="text-lg font-bold text-red-600">골든매치</h1>
+    <div className="h-full flex flex-col bg-white">
+      <header className="shrink-0 flex items-center gap-2 h-14 px-2 border-b border-gray-200">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          aria-label="뒤로 가기"
+          className="inline-flex items-center justify-center w-10 h-10 rounded-lg text-gray-700 hover:bg-gray-100 active:bg-gray-200"
+        >
+          <i className="bi bi-chevron-left text-xl" aria-hidden="true" />
+        </button>
+        <div className="flex-1 flex items-center gap-1.5 min-w-0">
+          <i className="bi bi-geo-alt-fill text-red-600 text-lg shrink-0" aria-hidden="true" />
+          <span className="text-base font-semibold text-gray-900 truncate">
+            {location.text.trim() || "위치 미설정"}
+          </span>
+        </div>
       </header>
 
-      <main className="flex-1 px-4 py-4 pb-28 flex flex-col gap-4 max-w-xl w-full mx-auto">
-        <section className="bg-white rounded-xl p-3 border border-gray-200">
-          <p className="text-xs text-gray-500 mb-2">위치</p>
-          <LocationInput value={location} onChange={setLocation} />
-        </section>
-
-        <section className="bg-white rounded-xl p-3 border border-gray-200">
-          <ChatStream
-            messages={messages}
-            busy={busy}
-            onSend={handleSend}
-          />
-          {error && (
-            <p className="text-xs text-red-600 mt-2">{error}</p>
-          )}
-        </section>
-
-        {match && (
-          <section className="flex flex-col gap-3">
-            <h2 className="text-sm font-semibold text-gray-700 px-1">
-              지금 갈 수 있는 응급실
-            </h2>
-            <ResultCard
-              hospital={match.primary}
-              primary
-              originLat={location.lat}
-              originLng={location.lng}
-            />
-            {match.alternatives.slice(0, 2).map((h, i) => (
-              <ResultCard
-                key={i}
-                hospital={h}
-                originLat={location.lat}
-                originLng={location.lng}
-              />
-            ))}
-          </section>
-        )}
+      <main className="flex-1 min-h-0 flex flex-col">
+        <ChatStream
+          messages={messages}
+          busy={busy}
+          onSend={handleSend}
+          error={error}
+          match={match}
+          matching={matching}
+          originLat={location.lat}
+          originLng={location.lng}
+        />
       </main>
-
-      <Disclaimer />
     </div>
   );
 }

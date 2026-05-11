@@ -99,6 +99,42 @@ function pickSevereAccept(rec: any): boolean {
   return false;
 }
 
+// NEMC MKioskTy* → suspected_dept mapping (per official OpenAPI 활용가이드 v5.0 p.21–23).
+// Each suspected_dept maps to one or more MKioskTy keys; "available" if ANY is Y.
+const DEPT_SEVERE_MAP: Record<string, { label: string; codes: string[] }> = {
+  "심정지/순환": { label: "심근경색 재관류", codes: ["MKioskTy1"] },
+  "흉통/심장": { label: "심근경색 재관류", codes: ["MKioskTy1"] },
+  신경: { label: "뇌경색·뇌출혈 응급", codes: ["MKioskTy2", "MKioskTy3", "MKioskTy4"] },
+  외상: { label: "사지접합 응급", codes: ["MKioskTy20", "MKioskTy21"] },
+  호흡: { label: "기관지 응급내시경", codes: ["MKioskTy13", "MKioskTy14"] },
+  산부인과: {
+    label: "산부인과 응급(분만·산과·부인과)",
+    codes: ["MKioskTy16", "MKioskTy17", "MKioskTy18"],
+  },
+  소아: {
+    label: "소아 응급",
+    codes: ["MKioskTy10", "MKioskTy12", "MKioskTy14", "MKioskTy15", "MKioskTy27"],
+  },
+  화상: { label: "중증화상 전문치료", codes: ["MKioskTy19"] },
+  중독: { label: "응급투석(HD·CRRT)", codes: ["MKioskTy22", "MKioskTy23"] },
+  정신: { label: "정신과 응급(폐쇄병동)", codes: ["MKioskTy24"] },
+  일반: { label: "", codes: [] },
+};
+
+function pickDeptSevere(
+  sevRec: any,
+  dept: string,
+): { label: string; available: boolean } | null {
+  const map = DEPT_SEVERE_MAP[dept];
+  if (!map || map.codes.length === 0) return null;
+  if (!sevRec) return { label: map.label, available: false };
+  const available = map.codes.some((code) => {
+    const v = sevRec[code];
+    return typeof v === "string" && v.trim().toUpperCase() === "Y";
+  });
+  return { label: map.label, available };
+}
+
 app.post("/", zValidator("json", MatchRequest), async (c) => {
   const body = c.req.valid("json");
 
@@ -200,6 +236,7 @@ app.post("/", zValidator("json", MatchRequest), async (c) => {
     const ll = pickLatLng(b.rec);
     const eta = etaByIdx.get(i);
     const accepts = b.sevRec ? pickSevereAccept(b.sevRec) : undefined;
+    const deptSev = pickDeptSevere(b.sevRec, body.suspected_dept);
     return {
       name,
       address: pickAddress(b.rec),
@@ -207,6 +244,8 @@ app.post("/", zValidator("json", MatchRequest), async (c) => {
       available_beds: pickAvailableBeds(b.merged),
       dept_match: deptMatch(name, body.suspected_dept),
       accepts_severe: accepts,
+      dept_severe_label: deptSev?.label,
+      dept_severe_available: deptSev?.available,
       distance_km: eta ? +(eta.distance_m / 1000).toFixed(2) : undefined,
       eta_min: eta ? +(eta.duration_sec / 60).toFixed(1) : undefined,
       kakao_route_url: ll

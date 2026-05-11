@@ -10,10 +10,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Frontend Conventions
 
+- **Mobile-only**: Design for mobile viewport only. Desktop/PC is out of scope. Do not add responsive breakpoints (`md:`, `lg:`, etc.) for PC layouts. Target a single mobile viewport.
 - **Icons**: Use Bootstrap Icons (`bootstrap-icons`) exclusively. Do not introduce other icon libraries (lucide, heroicons, react-icons, etc.) — keep the icon surface uniform.
 - **Design / UI work**: Always invoke the `/beautiful-design` skill before writing or modifying frontend UI. It owns the design system (tokens, spacing, typography, Linear-style aesthetic) for this project. Do not freestyle styles or component structure — go through the skill so the output stays consistent.
-
----
 
 ## 작업 태도
 

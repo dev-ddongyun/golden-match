@@ -8,6 +8,8 @@ export const HospitalCandidate = z.object({
   available_beds: z.number().int(),
   dept_match: z.boolean(),
   accepts_severe: z.boolean().optional(),
+  dept_severe_label: z.string().optional(),
+  dept_severe_available: z.boolean().optional(),
   distance_km: z.number().optional(),
   eta_min: z.number().optional(),
   kakao_route_url: z.string(),

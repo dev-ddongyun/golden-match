@@ -59,28 +59,22 @@ export default function LocationInput({ value, onChange }: Props) {
           type="text"
           value={value.text}
           onChange={(e) => onChange({ ...value, text: e.target.value })}
-          placeholder="OO동만 적어주셔도 됩니다"
-          className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
+          placeholder="우암동"
+          className="flex-1 h-10 border border-gray-300 rounded-lg px-3 text-sm focus:outline-none focus:ring-2 focus:ring-red-400"
         />
         <button
           type="button"
           onClick={requestGeo}
           disabled={status === "loading"}
-          className="shrink-0 px-3 py-2 text-sm rounded-lg bg-gray-900 text-white disabled:bg-gray-400"
+          aria-label="내 위치 사용"
+          className="shrink-0 inline-flex items-center justify-center w-10 h-10 text-gray-900 disabled:text-gray-400"
         >
-          {status === "loading" ? "확인중…" : "내 위치 사용"}
+          <i
+            className={`bi ${status === "loading" ? "bi-arrow-repeat animate-spin" : "bi-crosshair"} text-2xl`}
+            aria-hidden="true"
+          />
         </button>
       </div>
-      {status === "ok" && value.lat != null && (
-        <p className="text-xs text-green-700">
-          현재 위치: {value.text || `${value.lat.toFixed(5)}, ${value.lng?.toFixed(5)}`}
-        </p>
-      )}
-      {status === "denied" && (
-        <p className="text-xs text-gray-500">
-          위치 권한이 없으면 동 이름만 입력해 주세요.
-        </p>
-      )}
     </div>
   );
 }

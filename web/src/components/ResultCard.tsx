@@ -25,6 +25,8 @@ export default function ResultCard({
     phone,
     available_beds,
     accepts_severe,
+    dept_severe_label,
+    dept_severe_available,
     distance_km,
     eta_min,
     kakao_route_url,
@@ -70,19 +72,32 @@ export default function ResultCard({
 
       <div className="flex flex-wrap gap-2 mt-3">
         <span className="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-          가용 병상 {available_beds}
+          수용 병상 {available_beds}
         </span>
-        {accepts_severe != null && (
+        {dept_severe_label ? (
           <span
             className={[
               "text-xs px-2 py-1 rounded-full border",
-              accepts_severe
+              dept_severe_available
                 ? "bg-green-50 text-green-700 border-green-200"
                 : "bg-gray-50 text-gray-500 border-gray-200",
             ].join(" ")}
           >
-            중증 수용 {accepts_severe ? "가능" : "불가"}
+            {dept_severe_label} {dept_severe_available ? "가능" : "불가"}
           </span>
+        ) : (
+          accepts_severe != null && (
+            <span
+              className={[
+                "text-xs px-2 py-1 rounded-full border",
+                accepts_severe
+                  ? "bg-green-50 text-green-700 border-green-200"
+                  : "bg-gray-50 text-gray-500 border-gray-200",
+              ].join(" ")}
+            >
+              중증 수용 {accepts_severe ? "가능" : "불가"}
+            </span>
+          )
         )}
         {distance_km != null && (
           <span className="text-xs px-2 py-1 rounded-full bg-gray-50 text-gray-700 border border-gray-200">

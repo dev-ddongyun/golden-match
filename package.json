@@ -13,18 +13,21 @@
     "node": "22.x"
   },
   "dependencies": {
-    "hono": "^4.6.0",
     "@hono/zod-validator": "^0.4.1",
-    "zod": "^3.23.8",
+    "bootstrap-icons": "^1.13.1",
+    "hono": "^4.6.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-router-dom": "^6.26.2"
+    "react-markdown": "^10.1.0",
+    "react-router-dom": "^6.26.2",
+    "remark-gfm": "^4.0.1",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@vercel/node": "^3.2.0",
     "@types/node": "^20.14.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@vercel/node": "^3.2.0",
     "@vitejs/plugin-react": "^4.3.3",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",

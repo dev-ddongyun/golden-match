@@ -8,5 +8,15 @@
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck"
   },
-  "packageManager": "pnpm@9.0.0"
+  "packageManager": "pnpm@9.0.0",
+  "dependencies": {
+    "hono": "^4.6.0",
+    "@hono/zod-validator": "^0.4.1",
+    "zod": "^3.23.8",
+    "@goldenmatch/schema": "workspace:*"
+  },
+  "devDependencies": {
+    "@vercel/node": "^3.2.0",
+    "typescript": "^5.6.0"
+  }
 }

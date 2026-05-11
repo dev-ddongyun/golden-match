@@ -3,7 +3,8 @@
   "compilerOptions": {
     "module": "ESNext",
     "moduleResolution": "Bundler",
-    "noEmit": true
+    "noEmit": true,
+    "types": ["node"]
   },
   "include": ["api/**/*.ts", "apps/api/src/**/*.ts", "packages/schema/src/**/*.ts"]
 }

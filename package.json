@@ -1,6 +1,7 @@
 {
   "name": "golden-match",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "pnpm -r --parallel dev",
     "dev:web": "pnpm --filter web dev",

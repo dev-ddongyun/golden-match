@@ -2,5 +2,10 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "pnpm install --frozen-lockfile=false",
   "buildCommand": "pnpm --filter @goldenmatch/web build",
-  "outputDirectory": "apps/web/dist"
+  "outputDirectory": "apps/web/dist",
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "@vercel/node@3.2.29"
+    }
+  }
 }

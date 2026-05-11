@@ -4,7 +4,7 @@
   "buildCommand": "pnpm --filter @goldenmatch/web build",
   "outputDirectory": "apps/web/dist",
   "functions": {
-    "api/**/*.ts": {
+    "api/*.ts": {
       "runtime": "@vercel/node@3.2.29"
     }
   }

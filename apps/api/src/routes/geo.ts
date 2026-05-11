@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { coord2address, coord2regioncode } from "../services/kakao";
+import { coord2address, coord2regioncode } from "../services/kakao.js";
 
 const app = new Hono();
 

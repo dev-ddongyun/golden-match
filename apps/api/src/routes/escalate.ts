@@ -6,8 +6,8 @@ import {
   ESCALATE_MESSAGE,
   DISCLAIMER,
 } from "@goldenmatch/schema";
-import { coord2regioncode, searchAddress, searchKeyword } from "../services/kakao";
-import { getEgytList } from "../services/nemc";
+import { coord2regioncode, searchAddress, searchKeyword } from "../services/kakao.js";
+import { getEgytList } from "../services/nemc.js";
 
 const app = new Hono();
 

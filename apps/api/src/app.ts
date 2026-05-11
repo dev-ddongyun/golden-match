@@ -1,10 +1,10 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { ratelimit } from "./middleware/ratelimit";
-import chat from "./routes/chat";
-import match from "./routes/match";
-import escalate from "./routes/escalate";
-import geo from "./routes/geo";
+import { ratelimit } from "./middleware/ratelimit.js";
+import chat from "./routes/chat.js";
+import match from "./routes/match.js";
+import escalate from "./routes/escalate.js";
+import geo from "./routes/geo.js";
 
 export const app = new Hono();
 

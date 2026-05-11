@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { zValidator } from "@hono/zod-validator";
 import { ChatRequest } from "@goldenmatch/schema";
-import { streamGroqChat, GroqConfigError } from "../services/groq";
-import { SYSTEM_PROMPT } from "../prompts";
+import { streamGroqChat, GroqConfigError } from "../services/groq.js";
+import { SYSTEM_PROMPT } from "../prompts.js";
 
 const app = new Hono();
 

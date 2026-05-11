@@ -1,4 +1,4 @@
-import { TOOLS } from "../prompts";
+import { TOOLS } from "../prompts.js";
 
 export class GroqConfigError extends Error {
   status: number;

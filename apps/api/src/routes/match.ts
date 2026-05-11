@@ -12,13 +12,13 @@ import {
   coord2regioncode,
   directions,
   buildRouteUrl,
-} from "../services/kakao";
+} from "../services/kakao.js";
 import {
   getEgytList,
   getUsefulSickbed,
   getSevereAcceptance,
-} from "../services/nemc";
-import { rankCandidates } from "../scoring";
+} from "../services/nemc.js";
+import { rankCandidates } from "../scoring.js";
 
 const app = new Hono();
 

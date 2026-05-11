@@ -116,7 +116,7 @@ export default function Chat() {
 
   return (
     <div className="h-full flex flex-col bg-white">
-      <header className="shrink-0 flex items-center gap-2 h-14 px-2 border-b border-gray-200">
+      <header className="shrink-0 flex items-center gap-2 h-14 px-2 border-b border-gray-200 pt-safe box-content">
         <button
           type="button"
           onClick={() => navigate(-1)}

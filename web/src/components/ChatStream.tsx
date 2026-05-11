@@ -4,14 +4,19 @@ import remarkGfm from "remark-gfm";
 import type { ChatMessage, MatchResponse } from "../schema";
 import ResultCard from "./ResultCard";
 
+type SpeechResultAlternative = { transcript: string };
+type SpeechResult = ArrayLike<SpeechResultAlternative> & { isFinal: boolean };
 type SpeechRecognitionLike = {
   lang: string;
   interimResults: boolean;
   continuous: boolean;
   start: () => void;
   stop: () => void;
-  onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
-  onerror: (() => void) | null;
+  abort: () => void;
+  onresult:
+    | ((e: { resultIndex: number; results: ArrayLike<SpeechResult> }) => void)
+    | null;
+  onerror: ((e: { error?: string }) => void) | null;
   onend: (() => void) | null;
 };
 
@@ -50,23 +55,59 @@ export default function ChatStream({ messages, busy, onSend, error, match, match
   const recogRef = useRef<SpeechRecognitionLike | null>(null);
   const speechSupported = getSpeechCtor() !== null;
 
+  const manualStopRef = useRef(false);
+  const baseDraftRef = useRef("");
+
   function startListening() {
     const Ctor = getSpeechCtor();
     if (!Ctor) return;
     try {
       const r = new Ctor();
       r.lang = "ko-KR";
-      r.interimResults = false;
-      r.continuous = false;
+      r.interimResults = true;
+      r.continuous = true;
+      manualStopRef.current = false;
+      baseDraftRef.current = draft;
       r.onresult = (e) => {
-        const transcript = Array.from(e.results)
-          .map((res) => res[0]?.transcript ?? "")
-          .join(" ")
-          .trim();
-        if (transcript) setDraft((d) => (d ? d + " " + transcript : transcript));
+        let finalAdd = "";
+        let interim = "";
+        for (let i = e.resultIndex; i < e.results.length; i++) {
+          const res = e.results[i]!;
+          const text = res[0]?.transcript ?? "";
+          if (res.isFinal) finalAdd += text;
+          else interim += text;
+        }
+        if (finalAdd) {
+          baseDraftRef.current = baseDraftRef.current
+            ? baseDraftRef.current + " " + finalAdd.trim()
+            : finalAdd.trim();
+        }
+        const combined = [baseDraftRef.current, interim.trim()]
+          .filter(Boolean)
+          .join(" ");
+        setDraft(combined);
+        const el = inputRef.current;
+        if (el) {
+          el.style.height = "auto";
+          el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+        }
       };
-      r.onerror = () => setListening(false);
-      r.onend = () => setListening(false);
+      r.onerror = (ev) => {
+        if (ev.error === "no-speech" || ev.error === "aborted") return;
+        setListening(false);
+      };
+      r.onend = () => {
+        // iOS Safari auto-stops; restart unless user requested stop.
+        if (!manualStopRef.current) {
+          try {
+            r.start();
+            return;
+          } catch {
+            // fallthrough to stop
+          }
+        }
+        setListening(false);
+      };
       recogRef.current = r;
       setListening(true);
       r.start();
@@ -76,6 +117,7 @@ export default function ChatStream({ messages, busy, onSend, error, match, match
   }
 
   function stopListening() {
+    manualStopRef.current = true;
     try {
       recogRef.current?.stop();
     } catch {
@@ -170,7 +212,7 @@ export default function ChatStream({ messages, busy, onSend, error, match, match
         )}
       </div>
 
-      <div className="border-t border-gray-200 bg-white px-3 py-3">
+      <div className="border-t border-gray-200 bg-white px-3 py-3 pb-safe">
         {locked ? (
           <p className="text-center text-xs text-gray-500 py-2">
             응급실 안내가 완료되었습니다. 위 카드의 길찾기·전화를 이용해 주세요.

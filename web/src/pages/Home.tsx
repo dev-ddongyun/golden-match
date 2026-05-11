@@ -5,7 +5,7 @@ export default function Home() {
   const navigate = useNavigate();
   return (
     <div className="min-h-full flex flex-col px-6 pb-20 bg-white">
-      <header className="flex items-center justify-between h-12 -mx-2">
+      <header className="flex items-center justify-between h-12 -mx-2 pt-safe box-content">
         <span className="px-2 text-base font-extrabold tracking-tight text-red-600">
           골든매치
         </span>

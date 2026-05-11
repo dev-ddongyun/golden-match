@@ -9,6 +9,14 @@ body,
   height: 100%;
 }
 
+/* iOS safe-area utility classes (notch + home indicator). */
+.pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 body {
   font-family:
     -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard",

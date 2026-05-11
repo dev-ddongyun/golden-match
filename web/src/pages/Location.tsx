@@ -14,7 +14,7 @@ export default function LocationPage() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white px-6 py-8">
+    <div className="h-full flex flex-col bg-white px-6 py-8 pt-safe pb-safe">
       <div className="flex-1 flex flex-col items-center justify-center w-full">
         <div className="w-full text-center">
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">

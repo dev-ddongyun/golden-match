@@ -36,7 +36,7 @@ flowchart TD
 
 | API | 용도 |
 |---|---|
-| **Groq Chat Completions** (`openai/gpt-oss-20b`) | AI 문진 대화, tool calling 으로 정보 수집 완료/119 강제 분기 판단 |
+| **Groq Chat Completions** (`openai/gpt-oss-20b`) | **압도적인 TPS** — 응급 상황에서 1~2초 안에 문진 응답이 스트리밍됨. tool calling 으로 정보 수집 완료/119 강제 분기 판단 |
 | **공공데이터 응급의료정보 (NEMC)** | 응급실 목록·가용 병상·중증 수용 가능 여부 조회 (`B552657/ErmctInfoInqireService` 3개 op `hpid` left-join) |
 | **Kakao Local** | 사용자 입력 위치(주소·키워드)를 좌표로 변환 |
 | **Kakao Mobility Directions** | 환자 위치 → 후보 응급실 ETA·최단 경로 계산 |

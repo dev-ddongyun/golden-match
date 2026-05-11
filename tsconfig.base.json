@@ -9,11 +9,6 @@
     "skipLibCheck": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "react-jsx",
-    "baseUrl": ".",
-    "paths": {
-      "@goldenmatch/schema": ["packages/schema/src/index.ts"],
-      "@goldenmatch/schema/*": ["packages/schema/src/*"]
-    }
+    "jsx": "react-jsx"
   }
 }

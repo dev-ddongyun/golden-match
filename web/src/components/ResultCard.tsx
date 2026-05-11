@@ -1,4 +1,4 @@
-import type { HospitalCandidate } from "@goldenmatch/schema";
+import type { HospitalCandidate } from "../schema";
 import { openRoute } from "../lib/kakaoLink";
 
 interface Props {

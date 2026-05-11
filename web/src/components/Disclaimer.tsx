@@ -1,4 +1,4 @@
-import { DISCLAIMER } from "@goldenmatch/schema";
+import { DISCLAIMER } from "../schema";
 
 export default function Disclaimer() {
   return (

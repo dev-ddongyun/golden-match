@@ -4,7 +4,7 @@ import {
   ESCALATE_MESSAGE,
   type EscalateReasonLabel,
   type EscalateResponse,
-} from "@goldenmatch/schema";
+} from "../schema";
 import Disclaimer from "../components/Disclaimer";
 import { postEscalate } from "../lib/api";
 

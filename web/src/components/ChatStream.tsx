@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import type { ChatMessage } from "@goldenmatch/schema";
+import type { ChatMessage } from "../schema";
 
 interface Props {
   messages: ChatMessage[];

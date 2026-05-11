@@ -1,4 +1,4 @@
-import { buildKakaoRouteWebUrl } from "@goldenmatch/schema";
+import { buildKakaoRouteWebUrl } from "../schema";
 
 export interface OpenRouteArgs {
   name: string;

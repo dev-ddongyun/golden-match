@@ -5,5 +5,5 @@
     "moduleResolution": "Bundler",
     "types": ["node"]
   },
-  "include": ["api/**/*.ts", "apps/api/src/**/*.ts", "packages/schema/src/**/*.ts"]
+  "include": ["api/**/*.ts"]
 }

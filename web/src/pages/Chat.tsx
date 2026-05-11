@@ -5,7 +5,7 @@ import type {
   FinalizeQueryArgs,
   EscalateArgs,
   MatchResponse,
-} from "@goldenmatch/schema";
+} from "../schema";
 import Disclaimer from "../components/Disclaimer";
 import LocationInput, { type LocationValue } from "../components/LocationInput";
 import ChatStream from "../components/ChatStream";

@@ -4,7 +4,7 @@ import type {
   MatchResponse,
   EscalateRequest,
   EscalateResponse,
-} from "@goldenmatch/schema";
+} from "../schema";
 
 const BASE = (import.meta.env.VITE_API_BASE as string | undefined) ?? "";
 

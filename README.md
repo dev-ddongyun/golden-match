@@ -11,7 +11,7 @@ flowchart TD
     H[홈 - 응급 시작 버튼]
     L[위치 입력 페이지<br/>주소 직접 입력 또는 현재 위치 자동 감지]
     C1[채팅 페이지<br/>증상 입력 - 텍스트 또는 음성]
-    AI[Groq AI 문진<br/>최대 3턴 - clarifying_detail 강제]
+    AI[Groq AI 증상 분류<br/>최대 3턴 - clarifying_detail 강제]
     T{finalize_query<br/>tool call<br/>+ requires_severe<br/>+ clarifying_detail}
     M[NEMC 3 op 병합<br/>+ Kakao 거리·ETA<br/>+ 하드필터 - 병상·중증 시설<br/>+ ETA 정렬]
     R[추천 카드 인라인 렌더<br/>1순위 + 2개 대안]
@@ -32,9 +32,9 @@ flowchart LR
     end
 
     subgraph Edge [Vercel Functions - Hono]
-        CHAT[/api/chat<br/>SSE stream]
-        MATCH[/api/match<br/>응급실 매칭]
-        GEO[/api/geo/reverse<br/>좌표→주소]
+        CHAT["/api/chat<br/>SSE stream"]
+        MATCH["/api/match<br/>응급실 매칭"]
+        GEO["/api/geo/reverse<br/>좌표→주소"]
     end
 
     subgraph External [외부 API]
@@ -81,7 +81,7 @@ flowchart LR
 
 | API | 용도 |
 |---|---|
-| **Groq Chat Completions** (`openai/gpt-oss-20b`) | **압도적인 TPS** — 응급 상황에서 1~2초 안에 문진 응답이 스트리밍됨. tool calling으로 `finalize_query(location_text, suspected_dept, severity_hints, requires_severe, clarifying_detail)` 호출 시점·인자 판단 |
+| **Groq Chat Completions** (`openai/gpt-oss-20b`) | **압도적인 TPS** — 응급 상황에서 1~2초 안에 증상 분류 응답이 스트리밍됨. tool calling으로 `finalize_query(location_text, suspected_dept, severity_hints, requires_severe, clarifying_detail)` 호출 시점·인자 판단 |
 | **공공데이터 응급의료정보 (NEMC)** | 응급실 목록·실시간 가용 병상·중증질환 28개 카테고리 수용 가능 (`B552657/ErmctInfoInqireService` 3개 op `hpid` left-join) |
 | **Kakao Local** | 사용자 입력 위치(주소·키워드)를 좌표로 변환 |
 | **Kakao Mobility Directions** | 환자 위치 → 후보 응급실 ETA·최단 경로 계산 |

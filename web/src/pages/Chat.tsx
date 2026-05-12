@@ -105,6 +105,7 @@ export default function Chat() {
         lng: location.lng,
         suspected_dept: args.suspected_dept,
         severity_hints: args.severity_hints ?? [],
+        requires_severe: args.requires_severe ?? false,
       });
       setMatch(result);
     } catch (e) {
@@ -116,7 +117,7 @@ export default function Chat() {
 
   return (
     <div className="h-full flex flex-col bg-white">
-      <header className="shrink-0 flex items-center gap-2 h-14 px-2 border-b border-gray-200 pt-safe box-content">
+      <header className="sticky top-0 z-10 bg-white shrink-0 flex items-center gap-2 h-14 px-2 border-b border-gray-200 pt-safe box-content">
         <button
           type="button"
           onClick={() => navigate(-1)}

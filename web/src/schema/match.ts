@@ -22,6 +22,7 @@ export const MatchRequest = z.object({
   lng: z.number().optional(),
   suspected_dept: DeptEnum.default("일반"),
   severity_hints: z.array(z.string()).default([]),
+  requires_severe: z.boolean().default(false),
 });
 export type MatchRequest = z.infer<typeof MatchRequest>;
 

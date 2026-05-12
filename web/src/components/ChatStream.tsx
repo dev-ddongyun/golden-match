@@ -212,7 +212,7 @@ export default function ChatStream({ messages, busy, onSend, error, match, match
         )}
       </div>
 
-      <div className="border-t border-gray-200 bg-white px-3 py-3 pb-safe">
+      <div className="border-t border-gray-200 bg-white px-3 pt-3 pb-[max(env(safe-area-inset-bottom),1rem)]">
         {locked ? (
           <p className="text-center text-xs text-gray-500 py-2">
             응급실 안내가 완료되었습니다. 위 카드의 길찾기·전화를 이용해 주세요.

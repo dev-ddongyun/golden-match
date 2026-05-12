@@ -11,9 +11,9 @@ flowchart TD
     H[홈 - 응급 시작 버튼]
     L[위치 입력 페이지<br/>주소 직접 입력 또는 현재 위치 자동 감지]
     C1[채팅 페이지<br/>증상 입력 - 텍스트 또는 음성]
-    AI[Groq AI 문진<br/>최대 3턴 - 분기 가능 케이스는 1회 명확화]
-    T{finalize_query<br/>tool call}
-    M[NEMC 3 op 병합<br/>+ Kakao 거리·ETA<br/>+ MKioskTy 과별 수용 매칭]
+    AI[Groq AI 문진<br/>최대 3턴 - clarifying_detail 강제]
+    T{finalize_query<br/>tool call<br/>+ requires_severe<br/>+ clarifying_detail}
+    M[NEMC 3 op 병합<br/>+ Kakao 거리·ETA<br/>+ 하드필터 - 병상·중증 시설<br/>+ ETA 정렬]
     R[추천 카드 인라인 렌더<br/>1순위 + 2개 대안]
     K[카카오맵 길찾기 딥링크 / 직통 전화]
 
@@ -62,16 +62,26 @@ flowchart LR
    - `getEmrrmRltmUsefulSckbdInfoInqire` — 실시간 가용 병상 (`hvec` = 응급실 일반)
    - `getSrsillDissAceptncPosblInfoInqire` — 중증질환 28개 카테고리 수용 가능 여부 (`MKioskTy1~28`)
 3. **과별 매핑**: 사용자 증상 → `suspected_dept` → `MKioskTy*` 코드 집합 (NEMC 공식 스펙 v5.0 p.21-23 기준)
-4. **랭킹** (`api/_lib/scoring.ts`)
-   - **Hard split**: 과별 수용가능(`dept_severe_available = true`)인 병원만 primary 풀로 분리 → 불가 병원은 fallback
-   - 가중치: `W_DEPT_SEVERE = 5`(과별 실수용) ≫ `W_AVAIL = 2`(병상수) > `W_DEPT_NAME = 0.5`(병원명 휴리스틱) > `W_ACCEPT_ANY = 0.3`(어떤 MKioskTy든 Y) - `W_ETA = 0.2`(분 단위 패널티)
-5. **상위 1 + 2개 대안 반환** → 클라이언트가 채팅 스트림 안에 카드로 렌더, 컴포저는 결과 도착 시 잠김
+4. **거리·ETA prefilter**: 사용자 좌표 ↔ 병원 좌표 haversine 거리로 정렬 → 가장 가까운 10곳에 한해 Kakao Mobility directions 호출 (ETA·도로거리)
+5. **하드 필터링** (점수제 아님 — 의료적 판단을 점수로 깎지 않음)
+   - **필터 1 — 가용 병상 0인 곳 제외** (응급실 자리 없으면 못 받음)
+   - **필터 2 — `requires_severe=true` 이고 해당 진료과에 NEMC 중증 코드가 매핑되어 있을 때**, `dept_severe_available === true` 인 곳만 통과 (예: 산부인과+중증 → 분만 시설 `Y` 인 곳만)
+6. **정렬**: ETA 짧은 순 → (동률 시) 도로거리 → 병상 수
+7. **상위 1 + 2개 대안 반환** → 클라이언트가 채팅 스트림 안에 카드로 렌더, 컴포저는 결과 도착 시 잠김
+
+### `requires_severe` — 중증 시설 필수 여부
+
+분류 자체는 LLM이 `finalize_query` 도구 호출 시 `requires_severe: boolean` 으로 함께 반환. 진료과별 기본 가정(심정지·신경·흉통·외상·산부인과 후기·중독·정신·중증화상 → 거의 항상 `true`, 단순 미열·가벼운 상처 → `false`, 애매하면 `true` 안전 우선)이 프롬프트에 명시되어 있어 모델이 의료적 판단을 따로 하지 않아도 일관된 결과가 나옴.
+
+### `clarifying_detail` — finalize 전 결정적 후속 답 강제
+
+도구 인자에 필수 필드 `clarifying_detail` 을 두어, LLM이 "위치 + 증상 + 결정적 후속 답(출혈 부위, 임신 주수, 방사통/지속, 의식 등)" 세 가지를 모은 후에만 `finalize_query` 를 호출하도록 강제. 첫 메시지가 짧으면 거의 항상 한 차례 추가 질문을 던지고, 답을 받은 뒤 재분류 (예: "임신 + 출혈" 이라도 후속 답이 "어깨" 면 산부인과 → 외상으로 재분류).
 
 ## 사용한 API
 
 | API | 용도 |
 |---|---|
-| **Groq Chat Completions** (`openai/gpt-oss-20b`) | **압도적인 TPS** — 응급 상황에서 1~2초 안에 문진 응답이 스트리밍됨. tool calling으로 `finalize_query(location_text, suspected_dept, severity_hints)` 호출 시점 판단 |
+| **Groq Chat Completions** (`openai/gpt-oss-20b`) | **압도적인 TPS** — 응급 상황에서 1~2초 안에 문진 응답이 스트리밍됨. tool calling으로 `finalize_query(location_text, suspected_dept, severity_hints, requires_severe, clarifying_detail)` 호출 시점·인자 판단 |
 | **공공데이터 응급의료정보 (NEMC)** | 응급실 목록·실시간 가용 병상·중증질환 28개 카테고리 수용 가능 (`B552657/ErmctInfoInqireService` 3개 op `hpid` left-join) |
 | **Kakao Local** | 사용자 입력 위치(주소·키워드)를 좌표로 변환 |
 | **Kakao Mobility Directions** | 환자 위치 → 후보 응급실 ETA·최단 경로 계산 |
@@ -84,19 +94,6 @@ flowchart LR
 - **Backend**: Hono on Vercel Functions (Node.js, 로컬은 Bun으로 `api/dev.ts` 실행)
 - **공유 스키마**: Zod (web/api 양쪽 `schema/` 미러)
 - **배포**: Vercel
-
-## 로컬 실행
-
-```bash
-pnpm install
-pnpm dev                                              # web (Vite, http://localhost:5176)
-bun --hot --env-file=.env.local api/dev.ts            # api (Hono, http://localhost:8787)
-```
-
-`.env.local`에 필요한 키:
-- `GROQ_API_KEY`
-- `DATA_GO_KR_SERVICE_KEY` (NEMC)
-- `KAKAO_REST_API_KEY`
 
 ## License
 

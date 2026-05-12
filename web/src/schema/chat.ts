@@ -31,6 +31,8 @@ export const FinalizeQueryArgs = z.object({
   location_text: z.string().min(1),
   suspected_dept: DeptEnum,
   severity_hints: z.array(z.string()).default([]),
+  requires_severe: z.boolean().default(false),
+  clarifying_detail: z.string().default(""),
 });
 export type FinalizeQueryArgs = z.infer<typeof FinalizeQueryArgs>;
 

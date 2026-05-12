@@ -18,7 +18,6 @@ import {
   getUsefulSickbed,
   getSevereAcceptance,
 } from "../services/nemc.js";
-import { rankCandidates } from "../scoring.js";
 
 const app = new Hono();
 
@@ -57,6 +56,17 @@ function deptMatch(name: string, dept: string): boolean {
   const kws = DEPT_KEYWORDS[dept] ?? [];
   if (kws.length === 0) return false;
   return kws.some((k) => name.includes(k));
+}
+
+function haversineKm(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371;
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(a));
 }
 
 function pickLatLng(rec: any): { lat: number; lng: number } | null {
@@ -215,26 +225,34 @@ app.post("/", zValidator("json", MatchRequest), async (c) => {
     return { hpid, rec, merged, sevRec };
   });
 
-  // 4) Top-10 directions (only those with coords + we have user coords)
+  // 4) Prefilter by haversine distance, then fetch directions for nearest 10
   const hasUserCoords = typeof lat === "number" && typeof lng === "number";
-  const top = baseRecords.slice(0, 10);
+  const nearestHpids = hasUserCoords
+    ? baseRecords
+        .map((b) => {
+          const ll = pickLatLng(b.rec);
+          if (!ll) return null;
+          return { hpid: b.hpid, dist: haversineKm(lat!, lng!, ll.lat, ll.lng), ll };
+        })
+        .filter((x): x is { hpid: string; dist: number; ll: { lat: number; lng: number } } => x !== null)
+        .sort((a, b) => a.dist - b.dist)
+        .slice(0, 10)
+    : [];
   const etaResults = await Promise.allSettled(
-    top.map(async ({ rec }) => {
-      const ll = pickLatLng(rec);
-      if (!ll || !hasUserCoords) return null;
-      return await directions(lng!, lat!, ll.lng, ll.lat);
-    }),
+    nearestHpids.map(({ ll }) => directions(lng!, lat!, ll.lng, ll.lat)),
   );
-  const etaByIdx = new Map<number, { duration_sec: number; distance_m: number }>();
+  const etaByHpid = new Map<string, { duration_sec: number; distance_m: number }>();
   etaResults.forEach((r, i) => {
-    if (r.status === "fulfilled" && r.value) etaByIdx.set(i, r.value);
+    if (r.status === "fulfilled" && r.value) {
+      etaByHpid.set(nearestHpids[i]!.hpid, r.value);
+    }
   });
 
   // 5) Map to HospitalCandidate
-  const candidates: HospitalCandidate[] = baseRecords.map((b, i) => {
+  const candidates: HospitalCandidate[] = baseRecords.map((b) => {
     const name = pickName(b.rec);
     const ll = pickLatLng(b.rec);
-    const eta = etaByIdx.get(i);
+    const eta = etaByHpid.get(b.hpid);
     const accepts = b.sevRec ? pickSevereAccept(b.sevRec) : undefined;
     const deptSev = pickDeptSevere(b.sevRec, body.suspected_dept);
     return {
@@ -254,7 +272,25 @@ app.post("/", zValidator("json", MatchRequest), async (c) => {
     };
   });
 
-  const ranked = rankCandidates(candidates, { hasCoords: hasUserCoords });
+  // Hard filter: 병상 있는 곳만
+  let pool = candidates.filter((c) => c.available_beds > 0);
+  // Hard filter: 중증 시설 필수일 때만 dept_severe_available === true 인 곳만
+  const deptHasSevereCodes =
+    (DEPT_SEVERE_MAP[body.suspected_dept]?.codes.length ?? 0) > 0;
+  if (body.requires_severe && deptHasSevereCodes) {
+    pool = pool.filter((c) => c.dept_severe_available === true);
+  }
+  // 정렬: ETA 짧은 순 → 거리 → 병상
+  pool.sort((a, b) => {
+    const ae = a.eta_min ?? Number.POSITIVE_INFINITY;
+    const be = b.eta_min ?? Number.POSITIVE_INFINITY;
+    if (ae !== be) return ae - be;
+    const ad = a.distance_km ?? Number.POSITIVE_INFINITY;
+    const bd = b.distance_km ?? Number.POSITIVE_INFINITY;
+    if (ad !== bd) return ad - bd;
+    return b.available_beds - a.available_beds;
+  });
+  const ranked = pool;
   if (ranked.length === 0) {
     return c.json({ error: "후보 병원을 찾지 못했습니다." }, 404);
   }

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LocationInput, { type LocationValue } from "../components/LocationInput";
+import Disclaimer from "../components/Disclaimer";
 
 export default function LocationPage() {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ export default function LocationPage() {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white px-6 py-8 pt-safe pb-safe">
+    <div className="h-full flex flex-col bg-white px-6 py-8 pt-safe pb-20">
       <div className="flex-1 flex flex-col items-center justify-center w-full">
         <div className="w-full text-center">
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">
@@ -37,6 +38,8 @@ export default function LocationPage() {
       >
         다음
       </button>
+
+      <Disclaimer />
     </div>
   );
 }

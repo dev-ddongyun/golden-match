@@ -41,16 +41,53 @@ interface Props {
   originLng?: number;
 }
 
-const SUGGESTIONS = [
-  "깊은 상처가 났어요",
-  "아내가 임신 중인데 출혈이 있어요",
-  "약·이물질을 잘못 먹었어요",
-  "아이가 열이 많이 나요",
+const CATEGORIES: { label: string; icon: string; items: string[] }[] = [
+  {
+    label: "산부인과",
+    icon: "bi-gender-female",
+    items: [
+      "아내가 임신 중인데 출혈이 있어요",
+      "복부에 통증이 있어요",
+      "양수가 터졌어요",
+      "아내가 갑자기 쓰러졌어요",
+    ],
+  },
+  {
+    label: "외과",
+    icon: "bi-bandaid",
+    items: [
+      "목에 이물질이 걸렸어요",
+      "뼈가 부러졌어요",
+      "다친 부위가 붓기 시작했어요",
+      "아이가 뼈가 빠진 것 같아요",
+    ],
+  },
+  {
+    label: "내과",
+    icon: "bi-heart-pulse",
+    items: [
+      "심장이 너무 빨리 뛰어요",
+      "극심한 피로감이 느껴져요",
+      "아이가 열이 많이 나요",
+      "머리가 많이 어지러워요",
+    ],
+  },
+  {
+    label: "신경과",
+    icon: "bi-activity",
+    items: [
+      "입에서 거품이 나와요",
+      "갑자기 힘이 빠져서 물건을 떨어뜨려요",
+      "발음이 어눌하거나 입술이 비대칭이에요",
+      "손이 계속 떨리고 경련을 일으켜요",
+    ],
+  },
 ];
 
 export default function ChatStream({ messages, busy, onSend, error, match, matching, originLat, originLng }: Props) {
   const [draft, setDraft] = useState("");
   const [listening, setListening] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const recogRef = useRef<SpeechRecognitionLike | null>(null);
@@ -180,18 +217,42 @@ export default function ChatStream({ messages, busy, onSend, error, match, match
               <h2 className="text-xl font-bold text-gray-900">어디가 불편하신가요?</h2>
               <p className="mt-1 text-sm text-gray-500">증상을 짧게 말씀해 주세요.</p>
             </div>
-            <div className="w-full flex flex-col gap-2">
-              {SUGGESTIONS.map((s) => (
+            {selectedCategory === null ? (
+              <div className="w-full grid grid-cols-2 gap-2">
+                {CATEGORIES.map((c) => (
+                  <button
+                    key={c.label}
+                    type="button"
+                    onClick={() => setSelectedCategory(c.label)}
+                    className="flex flex-col items-center justify-center gap-2 px-4 py-5 rounded-xl border border-gray-200 hover:bg-gray-50 active:bg-gray-100 transition"
+                  >
+                    <i className={`bi ${c.icon} text-red-600 text-2xl`} aria-hidden="true" />
+                    <span className="text-sm font-semibold text-gray-900">{c.label}</span>
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <div className="w-full flex flex-col gap-2">
+                {CATEGORIES.find((c) => c.label === selectedCategory)?.items.map((s) => (
+                  <button
+                    key={s}
+                    type="button"
+                    onClick={() => send(s)}
+                    className="w-full text-left text-sm text-gray-800 px-4 py-3 rounded-xl border border-gray-200 hover:bg-gray-50 active:bg-gray-100 transition"
+                  >
+                    {s}
+                  </button>
+                ))}
                 <button
-                  key={s}
                   type="button"
-                  onClick={() => send(s)}
-                  className="w-full text-left text-sm text-gray-800 px-4 py-3 rounded-xl border border-gray-200 hover:bg-gray-50 active:bg-gray-100 transition"
+                  onClick={() => setSelectedCategory(null)}
+                  className="mt-1 inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50 active:bg-gray-100 transition"
                 >
-                  {s}
+                  <i className="bi bi-chevron-left text-base" aria-hidden="true" />
+                  뒤로
                 </button>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="flex flex-col gap-4">
